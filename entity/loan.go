@@ -17,8 +17,10 @@ type Loan struct {
 	ApprovedDate          *time.Time `json:"approved_date"`
 	InvestedDate          *time.Time `json:"invested_date"`
 	DisbursedBy           *int64     `json:"disbursed_by" db:"disbursed_by"`
-	DisbursedDate         *string    `json:"disbursed_date" db:"disbursed_date"`
-	SignedAgreementLetter *string    `json:"signed_agreement_letter" db:"signed_agreement_letter"`
+	DisbursedDate         *time.Time `json:"disbursed_date" db:"disbursed_date"`
+	SignedAgreementLetter *[]byte    `json:"signed_agreement_letter" db:"signed_agreement_letter"`
+	AmountInvested        int64      `json:"amount_invested" gorm:"->:false;<-:create"`
+	AmountUninvested      int64      `json:"amount_uninvested" gorm:"->:false;<-:create"`
 	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
 }

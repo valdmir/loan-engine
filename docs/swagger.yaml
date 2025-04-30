@@ -1,0 +1,280 @@
+openapi: 3.0.0
+info:
+  title: Loan Engine API
+  description: API documentation for the Loan Engine service
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /loans:
+    get:
+      summary: Get all loans
+      description: Retrieve a list of all loans
+      tags:
+        - Loans
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+    post:
+      summary: Register a new loan
+      description: Submit a new loan proposal
+      tags:
+        - Loans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - borrower_id
+                - principal_amount
+                - rate
+              properties:
+                borrower_id:
+                  type: integer
+                  format: int64
+                  description: ID of the borrower
+                principal_amount:
+                  type: number
+                  format: float
+                  description: Principal amount of the loan
+                rate:
+                  type: number
+                  format: float
+                  description: Interest rate of the loan
+      responses:
+        '200':
+          description: Loan proposal submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Proposal New Loan Submitted"
+                  unique_id:
+                    type: string
+                    example: "testing"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+  /loans/{id}/approve:
+    post:
+      summary: Approve a loan
+      description: Approve a loan proposal with proof image
+      tags:
+        - Loans
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID of the loan to approve
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - employee_id
+                - approval_date
+                - proof_image
+              properties:
+                employee_id:
+                  type: integer
+                  format: int64
+                  description: ID of the employee approving the loan
+                approval_date:
+                  type: string
+                  format: date
+                  description: Date of approval (YYYY-MM-DD)
+                proof_image:
+                  type: string
+                  format: binary
+                  description: Proof image file
+      responses:
+        '200':
+          description: Loan approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "This Loan get approve"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+  /loans/{id}:
+    get:
+      summary: Approve a loan
+      description: Approve a loan proposal with proof image
+      tags:
+        - Loans
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID of the loan to approve
+      responses:
+        '200':
+          description: Loan approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "This Loan get approve"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  /loans/{id}/invest:
+    post:
+      summary: Invest in a loan
+      description: Make an investment in an approved loan
+      tags:
+        - Loans
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID of the loan to invest in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - investor_id
+                - invest_amount
+              properties:
+                investor_id:
+                  type: integer
+                  format: int64
+                  description: ID of the investor
+                invest_amount:
+                  type: number
+                  format: float
+                  description: Amount to invest
+      responses:
+        '200':
+          description: Investment successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "This Loan get approve"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+  /loans/{id}/disburse:
+    post:
+      summary: Disburse the loan
+      description: Make an investment in an approved loan
+      tags:
+        - Loans
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID of the loan to invest in
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - loan_agreement_file
+                - date_disbursement
+                - employee_id
+              properties:
+                employee_id:
+                  type: integer
+                  format: int64
+                  description: ID of the employee approving the loan
+                date_disbursement:
+                  type: string
+                  format: date
+                  description: Date of approval (YYYY-MM-DD)
+                loan_agreement_file:
+                  type: string
+                  format: binary
+                  description: Proof image file
+      responses:
+        '200':
+          description: Disbursement successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "This Loan successfull Disburse"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+components:
+  schemas: {}

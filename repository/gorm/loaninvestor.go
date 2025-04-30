@@ -31,6 +31,6 @@ func (p *LoanInvestorPsqlRepo) GetTotalAlreadyInvested(ctx context.Context, loan
 	}
 	return result.Total, nil
 }
-func (p *LoanInvestorPsqlRepo) SetNewInvestor(ctx context.Context, data entity.LoanInvestor) error {
-	return p.Conn.Create(&data).Error
+func (p *LoanInvestorPsqlRepo) SetNewInvestor(ctx context.Context, tx *gorm.DB, data entity.LoanInvestor) error {
+	return tx.Create(&data).Error
 }

@@ -24,7 +24,9 @@ func (p *LoanPsqlRepo) RegisterNewLoan(ctx context.Context, data entity.Loan) er
 	return p.Conn.Create(&data).Error
 }
 func (p *LoanPsqlRepo) GetAllLoan(ctx context.Context, status string) ([]*entity.Loan, error) {
-	return nil, nil
+	var loan []*entity.Loan
+	result := p.Conn.Where("current_status=?", "APPROVED").Find(&loan)
+	return loan, result.Error
 }
 func (p *LoanPsqlRepo) ApproveLoan(ctx context.Context, data entity.Loan, loanID int64) error {
 	tempLoan := entity.Loan{ID: loanID}
@@ -48,11 +50,30 @@ func (p *LoanPsqlRepo) ApproveLoan(ctx context.Context, data entity.Loan, loanID
 	}
 	return nil
 }
-func (p *LoanPsqlRepo) InvestLoan(ctx context.Context, data entity.Loan) error {
+func (p *LoanPsqlRepo) BeginTx(ctx context.Context) (*gorm.DB, error) {
+	return p.Conn.Begin(), nil
+}
 
+func (p *LoanPsqlRepo) CommitTx(tx *gorm.DB) error {
+	return tx.Commit().Error
+}
+
+func (p *LoanPsqlRepo) RollbackTx(tx *gorm.DB) error {
+	return tx.Rollback().Error
+}
+
+func (p *LoanPsqlRepo) GetLoanByIDWithLock(ctx context.Context, loanID int64) (entity.Loan, error) {
+	var loan entity.Loan
+	result := p.Conn.Set("gorm:query_option", "FOR UPDATE").First(&loan, loanID)
+	if result.Error != nil {
+		return loan, result.Error
+	}
+	return loan, nil
+}
+
+func (p *LoanPsqlRepo) InvestLoan(ctx context.Context, data entity.Loan) error {
 	result := p.Conn.Save(&data)
 	if result.Error != nil {
-		fmt.Println(result.Error)
 		zap.L().Error("Failed to invest loan",
 			zap.String("module", "application loan process"),
 			zap.String("error", result.Error.Error()),
@@ -61,7 +82,26 @@ func (p *LoanPsqlRepo) InvestLoan(ctx context.Context, data entity.Loan) error {
 	}
 	return nil
 }
-func (p *LoanPsqlRepo) DisburseLoan(ctx context.Context, data entity.Loan) error {
+func (p *LoanPsqlRepo) DisburseLoan(ctx context.Context, data entity.Loan, loanID int64) error {
+	tempLoan := entity.Loan{ID: loanID}
+	result := p.Conn.First(&tempLoan)
+	if result.Error != nil {
+		fmt.Println(result.Error)
+		zap.L().Error("Failed to get the loan",
+			zap.String("module", "application loan process"),
+			zap.String("error", result.Error.Error()),
+			zap.Time("at", time.Now()))
+		return result.Error
+	}
+	fmt.Println(tempLoan)
+	resultUpdate := p.Conn.Model(&tempLoan).Select("disbursed_by", "disbursed_date", "signed_agreement_letter", "current_status").Updates(data)
+	if resultUpdate.Error != nil {
+		zap.L().Error("Failed to update the loan",
+			zap.String("module", "application loan process"),
+			zap.String("error", resultUpdate.Error.Error()),
+			zap.Time("at", time.Now()))
+		return resultUpdate.Error
+	}
 	return nil
 }
 func (p *LoanPsqlRepo) GetLoanByID(ctx context.Context, loanID int64) (entity.Loan, error) {

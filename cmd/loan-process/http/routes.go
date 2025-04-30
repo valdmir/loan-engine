@@ -13,7 +13,22 @@ import (
 )
 
 func NewHandler(loanProcessHandler *LoanProcessHandler, logger *zap.Logger) {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		EnablePrintRoutes: true,
+	})
+
+	// Add CORS middleware
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// Handle preflight requests
+		if c.Method() == "OPTIONS" {
+			return c.SendStatus(fiber.StatusOK)
+		}
+		return c.Next()
+	})
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
 	}))
@@ -22,9 +37,13 @@ func NewHandler(loanProcessHandler *LoanProcessHandler, logger *zap.Logger) {
 		return c.SendString("Hello, World 👋!")
 	})
 
+	app.Get("/loans", loanProcessHandler.GetAllLoan)
 	app.Post("/loans", loanProcessHandler.RegisterNewLoan)
-	app.Post("/loans/:id", loanProcessHandler.ApprovalLoan)
-	app.Post("/loans/:id/investors", loanProcessHandler.InvestLoan)
+	app.Get("/loans/:id", loanProcessHandler.GetDetailLoan)
+	app.Post("/loans/:id/approve", loanProcessHandler.ApprovalLoan)
+	app.Post("/loans/:id/invest", loanProcessHandler.InvestLoan)
+	app.Post("/loans/:id/disburse", loanProcessHandler.DisburseLoan)
+	app.Get("/loans/:id/investors", loanProcessHandler.InvestLoan)
 	// app.Get("/loans", loanProcessHandler.RegisterNewLoan)
 	// app.Get("/categories", categoryHandler.GetCategories)
 	// app.Get("/categories/:name/subcategories", categoryHandler.GetSubCategories)
@@ -46,7 +65,7 @@ func NewHandler(loanProcessHandler *LoanProcessHandler, logger *zap.Logger) {
 	// 	protectedRoute.Get("/v1/investments", connectionHandler.GetListInvestment)
 
 	// }
-	port := "80"
+	port := "8080"
 	fmt.Println("PORT FROM ENV:" + os.Getenv("PORT"))
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")
